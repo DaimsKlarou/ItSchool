@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "999951527636",
+    "project_id": "itschool-d78ae",
+    "storage_bucket": "itschool-d78ae.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:999951527636:android:de17726172b862d4065541",
+        "android_client_info": {
+          "package_name": "com.example.itschool"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxU-KEhUKBFWPiczLYWSmZjii_-nLvN-s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
