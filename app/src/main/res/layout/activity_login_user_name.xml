@@ -83,7 +83,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Entrer votre nom d'utilisateur"
+        android:text="Entrer votre username"
         android:layout_gravity="center"
         android:letterSpacing="0.08"
         android:textStyle="bold"
@@ -94,22 +94,38 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:gravity="center"
         android:layout_weight="5">
 
         <EditText
             android:id="@+id/username"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:hint="Username"
             android:inputType="text"
-            android:padding="10dp"
+            android:padding="15dp"
             android:layout_margin="10dp"
             android:background="@drawable/edit_text_phone_number_corner"
             android:elevation="5dp"
             android:textColor="@color/black"
             android:textColorHint="@color/light_gray"
+            android:textSize="18dp"
+            />
+
+        <EditText
+            android:id="@+id/email_user"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Enter email"
+            android:inputType="textEmailAddress"
+            android:padding="15dp"
+            android:layout_margin="10dp"
+            android:background="@drawable/edit_text_phone_number_corner"
+            android:elevation="5dp"
+            android:textColor="@color/black"
+            android:textColorHint="@color/light_gray"
+            android:textSize="18dp"
             />
     </LinearLayout>
 
@@ -121,10 +137,10 @@
         android:layout_weight="20">
 
         <Button
-            android:id="@+id/sendOtp"
+            android:id="@+id/login"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Send OTP Code"
+            android:text="Continuer"
             android:background="@drawable/btn_rounded_corner"
             android:textColor="@color/white"
             />

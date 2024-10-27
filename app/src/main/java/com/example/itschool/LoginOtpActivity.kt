@@ -1,10 +1,12 @@
 package com.example.itschool
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -17,7 +19,8 @@ import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.auth.PhoneAuthProvider.ForceResendingToken
 import com.google.firebase.auth.auth
-import com.google.firebase.firestore.FirebaseFirestore
+import java.util.Timer
+import java.util.TimerTask
 import java.util.concurrent.TimeUnit
 
 class LoginOtpActivity : AppCompatActivity() {
@@ -30,6 +33,8 @@ class LoginOtpActivity : AppCompatActivity() {
     private val mAuth = FirebaseAuth.getInstance()
     private lateinit var verificationCode : String
     lateinit var resendingToken: ForceResendingToken
+    private var timeoutSeconds = 60L
+    private lateinit var resendOtp : TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,14 +50,33 @@ class LoginOtpActivity : AppCompatActivity() {
         progressBar = findViewById(R.id.progress_bar)
         codeOtp = findViewById(R.id.code_otp)
         nextBtn = findViewById(R.id.next_btn)
+        resendOtp = findViewById(R.id.resend_code)
 
         progressBar.visibility = ProgressBar.GONE
-
-        val db = FirebaseFirestore.getInstance()
         sendOtp(phoneNumber, false)
+
+        nextBtn.setOnClickListener {
+            val code = codeOtp.text.toString()
+            if (code.isEmpty() || code.length < 6) {
+                codeOtp.error = "Wrong OTP"
+                codeOtp.requestFocus()
+                return@setOnClickListener
+            }
+            else{
+                val credential = PhoneAuthProvider.getCredential(verificationCode, code)
+                singIn(credential)
+                setInProgress(true)
+                sendOtp(phoneNumber, true)
+            }
+        }
+
+        resendOtp.setOnClickListener {
+            sendOtp(phoneNumber, true)
+        }
     }
 
     private fun sendOtp(phone : String, isResend : Boolean){
+        startResendTimer()
         setInProgress(true)
 
         val builder = PhoneAuthOptions.newBuilder(mAuth)
@@ -63,6 +87,7 @@ class LoginOtpActivity : AppCompatActivity() {
                 override fun onVerificationCompleted(credential: PhoneAuthCredential) {
                    singIn(credential)
                     Log.d("LoginOptActivityLogs", "onVerificationCompleted: $credential")
+                    AndroidUtils.showToast(applicationContext, "Sign in successfully")
                     setInProgress(false)
                 }
 
@@ -76,7 +101,8 @@ class LoginOtpActivity : AppCompatActivity() {
                     super.onCodeSent(p0, p1)
                     verificationCode = p0
                     resendingToken = p1
-                    AndroidUtils.showToast(applicationContext, "OTP sent successfully, verificationCode is $verificationCode ")
+                    AndroidUtils.showToast(applicationContext, "OTP sent successfully")
+                    Log.d("LoginOptActivityLogs", "onCodeSent: $p0 et le token de resending est $p1")
                     setInProgress(false)
                 }
             })
@@ -87,15 +113,6 @@ class LoginOtpActivity : AppCompatActivity() {
             PhoneAuthProvider.verifyPhoneNumber(builder.build())
         }
 
-
-    }
-
-    private fun singIn(credential: PhoneAuthCredential) {
-        val code = credential.smsCode
-        if (code != null) {
-            codeOtp.setText(code)
-        }
-        AndroidUtils.showToast(applicationContext, "Sign in successfully")
     }
 
     fun setInProgress(inProgress : Boolean){
@@ -106,6 +123,43 @@ class LoginOtpActivity : AppCompatActivity() {
             nextBtn.visibility = Button.VISIBLE
             progressBar.visibility = ProgressBar.GONE
         }
+    }
+
+    private fun singIn(credential: PhoneAuthCredential) {
+        setInProgress(true)
+        mAuth.signInWithCredential(credential).addOnCompleteListener { onCompleteListener ->
+            setInProgress(false)
+            if (onCompleteListener.isSuccessful) {
+                Log.d("LoginOptActivityLogs", "singIn: ${onCompleteListener.result}")
+                AndroidUtils.showToast(applicationContext, "Sign in successfully")
+                val intent = Intent(this, LoginUserNameActivity::class.java)
+                intent.putExtra("phone", phoneNumber)
+                startActivity(intent)
+            } else {
+                Log.d("LoginOptActivityLogs", "singIn: ${onCompleteListener.exception}")
+                AndroidUtils.showToast(applicationContext, onCompleteListener.exception.toString())
+            }
+        }
+    }
+
+    private fun startResendTimer() {
+        resendOtp.isEnabled = false
+        val timer = Timer()
+        timer.scheduleAtFixedRate(object : TimerTask() {
+            override fun run() {
+                runOnUiThread {
+                    timeoutSeconds--
+                    resendOtp.text = "Resend OTP in $timeoutSeconds seconds"
+
+                    if (timeoutSeconds == 0L) {
+                        resendOtp.isEnabled = true
+                        resendOtp.text = "Resend OTP"
+                        timeoutSeconds = 60L
+                        timer.cancel()
+                    }
+                }
+            }
+        }, 0, 1000)
     }
 
 }
