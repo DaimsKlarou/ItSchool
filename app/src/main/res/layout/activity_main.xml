@@ -55,9 +55,8 @@
         android:layout_alignParentBottom="true"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:id="@+id/bottom_navigation"
-        app:menu="@menu/bottom_navigation_menu"/>
-
-
-
+        app:menu="@menu/bottom_navigation_menu"
+        app:itemTextAppearanceInactive="@color/light_gray"
+        />
 
 </RelativeLayout>

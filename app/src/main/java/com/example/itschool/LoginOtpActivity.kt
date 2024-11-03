@@ -87,7 +87,7 @@ class LoginOtpActivity : AppCompatActivity() {
                 override fun onVerificationCompleted(credential: PhoneAuthCredential) {
                    singIn(credential)
                     Log.d("LoginOptActivityLogs", "onVerificationCompleted: $credential")
-                    AndroidUtils.showToast(applicationContext, "Sign in successfully")
+                    Log.d("LoginOptActivityLogs", "Sing In successffully!!!")
                     setInProgress(false)
                 }
 
@@ -101,7 +101,6 @@ class LoginOtpActivity : AppCompatActivity() {
                     super.onCodeSent(p0, p1)
                     verificationCode = p0
                     resendingToken = p1
-                    AndroidUtils.showToast(applicationContext, "OTP sent successfully")
                     Log.d("LoginOptActivityLogs", "onCodeSent: $p0 et le token de resending est $p1")
                     setInProgress(false)
                 }
@@ -131,9 +130,9 @@ class LoginOtpActivity : AppCompatActivity() {
             setInProgress(false)
             if (onCompleteListener.isSuccessful) {
                 Log.d("LoginOptActivityLogs", "singIn: ${onCompleteListener.result}")
-                AndroidUtils.showToast(applicationContext, "Sign in successfully")
+                AndroidUtils.showToast(applicationContext, "Sign in successfully, le numero est $phoneNumber")
                 val intent = Intent(this, LoginUserNameActivity::class.java)
-                intent.putExtra("phone", phoneNumber)
+                intent.putExtra("phone_number", phoneNumber)
                 startActivity(intent)
             } else {
                 Log.d("LoginOptActivityLogs", "singIn: ${onCompleteListener.exception}")

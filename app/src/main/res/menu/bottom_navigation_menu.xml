@@ -5,6 +5,17 @@
         android:icon="@drawable/chat_icon"
         android:id="@+id/menu_chat"
         />
+
+    <item android:id="@+id/menu_groups"
+        android:title="Groups"
+        android:icon="@drawable/group_icon"
+        />
+
+    <item android:id="@+id/menu_evaluation"
+        android:title="Evaluations"
+        android:icon="@drawable/documents_icon"
+        />
+
     <item android:title="Profile"
         android:icon="@drawable/person_icon"
         android:id="@+id/menu_profile"

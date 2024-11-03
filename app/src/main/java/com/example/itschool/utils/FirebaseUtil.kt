@@ -1,17 +1,19 @@
 package com.example.itschool.utils
 
+import android.util.Log
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
 import java.text.SimpleDateFormat
 
 object FirebaseUtil {
 
-    private fun currentUserId(): String? {
+    fun currentUserId(): String? {
             return FirebaseAuth.getInstance().uid
         }
 
@@ -23,11 +25,15 @@ object FirebaseUtil {
         return FirebaseFirestore.getInstance().collection("users").document(currentUserId()!!)
     }
 
-    private fun allUserCollectionReference(): CollectionReference {
+    fun allUserCollectionReference(): CollectionReference {
         return FirebaseFirestore.getInstance().collection("users")
     }
 
-    private fun getChatroomReference(chatroomId: String): DocumentReference {
+    fun allClassroomCollectionReference(): CollectionReference {
+        return FirebaseFirestore.getInstance().collection("classrooms")
+    }
+
+    fun getChatroomReference(chatroomId: String): DocumentReference {
         return FirebaseFirestore.getInstance().collection("chatrooms").document(chatroomId)
     }
 
@@ -43,20 +49,24 @@ object FirebaseUtil {
         }
     }
 
+    fun getOtherUserIsOnline(otherUserId: String) : Query {
+        return allUserCollectionReference().whereEqualTo("userId", otherUserId).whereEqualTo("isOnline", true)
+    }
+
     fun allChatroomCollectionReference(): CollectionReference {
         return FirebaseFirestore.getInstance().collection("chatrooms")
     }
 
-    fun getOtherUserFromChatroom(userIds: List<String>): DocumentReference {
+    fun getOtherUserFromChatroom(userIds: List<String?>): DocumentReference {
         return if (userIds[0] == currentUserId()) {
-            allUserCollectionReference().document(userIds[1])
+            allUserCollectionReference().document(userIds[1]!!)
         } else {
-            allUserCollectionReference().document(userIds[0])
+            allUserCollectionReference().document(userIds[0]!!)
         }
     }
 
-    fun timestampToString(timestamp: Timestamp): String {
-        return SimpleDateFormat("HH:mm").format(timestamp.toDate())
+    fun timestampToString(timestamp: Timestamp?): String {
+        return SimpleDateFormat("HH:mm").format(timestamp?.toDate()!!)
     }
 
     fun logout() {
@@ -72,4 +82,23 @@ object FirebaseUtil {
         return FirebaseStorage.getInstance().getReference("profile_pic")
                 .child(otherUserId)
     }
+
+    fun getChatroomPicStorageRef(chatroomId: String): StorageReference {
+        return FirebaseStorage.getInstance().getReference("chatroom_pic")
+                .child(chatroomId)
+    }
+
+    fun getAssignmentStorageRef(): StorageReference {
+        return FirebaseStorage.getInstance().getReference("assignments")
+    }
+
+    //Section dedier a la classe et a toute les manipulations sur les classes
+    fun getClassroomReference(classroomId: String): DocumentReference {
+        return FirebaseFirestore.getInstance().collection("classrooms").document(classroomId)
+    }
+
+    fun allGroupCollectionReference(classroomId: String): CollectionReference {
+        return getClassroomReference(classroomId).collection("groups")
+    }
+
 }
