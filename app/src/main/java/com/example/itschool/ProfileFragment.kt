@@ -75,6 +75,7 @@ class ProfileFragment : Fragment() {
             FirebaseMessaging.getInstance().deleteToken().addOnCompleteListener { task ->
     if (task.isSuccessful) {
         FirebaseUtil.logout()
+        FirebaseUtil.currentUserDetails().update("isOnline", false)
         val intent = Intent(requireContext(), SplashActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
@@ -145,7 +146,7 @@ class ProfileFragment : Fragment() {
             phoneInput.setText(currentUserModel?.phone)
             profile_email.setText(currentUserModel?.email)
             profile_type.setText(currentUserModel?.role)
-            profile_classe.setText(currentUserModel?.classe)
+            if(currentUserModel?.role == "Etudiant") profile_classe.setText(currentUserModel?.classe) else profile_classe.setText(currentUserModel?.matricule)
         }
     }
 

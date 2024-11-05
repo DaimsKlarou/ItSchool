@@ -11,14 +11,16 @@ import android.widget.EditText
 import android.widget.ProgressBar
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import com.example.itschool.model.ChatroomModel
 import com.example.itschool.model.UserModel
 import com.example.itschool.model.ClassroomModel
+import com.example.itschool.model.GrouproomModel
 import com.example.itschool.utils.AndroidUtils
 import com.example.itschool.utils.FirebaseUtil
-import com.firebase.ui.firestore.FirestoreRecyclerOptions
-import com.firebase.ui.firestore.SnapshotParser
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.QuerySnapshot
+import com.google.firebase.firestore.auth.User
 
 class LoginUserNameActivity : AppCompatActivity() {
     private lateinit var userName: EditText
@@ -36,7 +38,7 @@ class LoginUserNameActivity : AppCompatActivity() {
     private val NiveauItems = arrayOf("Licence 1", "Licence 2", "Licence 3", "Master 1", "master 2")
     private val licenceItems = arrayOf("SIGL", "SRIT", "TWIN")
     private val masterItems = arrayOf("MBDS", "BIHAR", "SIGL", "SITW", "RTEL", "ERIS")
-    private var role = "Etudiant"
+    private var roleUser : String = "Etudiant"
     private lateinit var formation : String
     private lateinit var niveau : String
     private lateinit var filiere : String
@@ -72,15 +74,16 @@ class LoginUserNameActivity : AppCompatActivity() {
             val selectedItem = parent.getItemAtPosition(position).toString()
             if (selectedItem == "Professeur") {
                 matriculate.visibility = View.VISIBLE
-                role = "Professeur"
+                roleUser = "Professeur"
                 matriculate.setText("")
 
             } else {
                 matriculate.visibility = View.GONE
-                role = "Etudiant"
+                roleUser = "Etudiant"
             }
         }
 
+        //selection du niveau et de la filiere pour former la classe
         autoCompleteNiveau = findViewById(R.id.niveau)
         val adapterNiveau = ArrayAdapter(this, R.layout.list_item, NiveauItems)
         autoCompleteNiveau.setAdapter(adapterNiveau)
@@ -106,7 +109,7 @@ class LoginUserNameActivity : AppCompatActivity() {
             val selectedItem = parent.getItemAtPosition(position).toString()
             filiere = selectedItem
 
-            formation = niveau + " " + filiere
+            formation = "$niveau $filiere"
             AndroidUtils.showToast(this, "la formation choisi est $formation")
         }
 
@@ -133,10 +136,10 @@ class LoginUserNameActivity : AppCompatActivity() {
                     matriculate.setText(userModel.matricule)
                 }
                 if (userModel.role != null) {
-                    role = userModel.role.toString()
+                    roleUser = userModel.role.toString()
                 }
             } else {
-                userModel = UserModel(phone = phoneNumber, username = userName.text.toString(), email = emailUser.text.toString(), createdTimestamp = Timestamp.now(), userId = FirebaseUtil.currentUserId(), matricule = matriculate.text.toString(), role = role)
+                userModel = UserModel(phone = phoneNumber, username = userName.text.toString(), email = emailUser.text.toString(), createdTimestamp = Timestamp.now(), userId = FirebaseUtil.currentUserId(), matricule = matriculate.text.toString(), role = roleUser)
             }
         }.addOnFailureListener {
             setInProgress(false)
@@ -172,65 +175,147 @@ class LoginUserNameActivity : AppCompatActivity() {
             return
         }
 
-        userModel.username = username
-        userModel.email = email
-        userModel.phone = phone
-        userModel.role = role
-        userModel.matricule = matriculate.text.toString()
-        userModel.userId = FirebaseUtil.currentUserId()
-        userModel.classe = formation
-        userModel.isOnline = true
-
-        AndroidUtils.showToast(this, "votre numero est $phone")
-
-        if (username.isEmpty() || email.isEmpty() || username.length < 3) {
-            userName.error = "The username or email is empty or too short"
-            setInProgress(false)
-            return
+        userModel.apply {
+            this.username = username
+            this.email = email
+            this.phone = phone
+            this.matricule = matriculate.text.toString()
+            this.userId = FirebaseUtil.currentUserId()
+            this.classe = formation
+            this.isOnline = true
+            this.role = roleUser
         }
 
-        if (!emailValidation(email)) {
-            emailUser.error = "The email is not valid"
-            setInProgress(false)
-            return
-        }
+        AndroidUtils.showToast(this, "Your phone number is $phone")
+
+        getOrCreateClassroomModel()
 
         FirebaseUtil.currentUserDetails().set(userModel).addOnCompleteListener { task ->
             setInProgress(false)
             if (task.isSuccessful) {
                 val intent = Intent(this, MainActivity::class.java)
+                Log.d("LoginUserName", "La classe de l'utilisateur est ${classroomId}")
+                intent.putExtra("classroomId", classroomId)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+
                 startActivity(intent)
+            } else {
+                AndroidUtils.showToast(this, "Failed to save user data")
             }
         }
     }
 
-    private fun getOrCreateChatroomModel() {
+    private fun getOrCreateGroupRoomModel() {
+        Log.d("LoginUserName", "La matiere du prof est ${matriculate.text.toString()}")
+        val classroomId = classroomModel.classroomId.toString()
 
+        AndroidUtils.showToast(this, "L'ID de la classe est $classroomId")
+        Log.d("LoginUserName", "L'ID de la classe est $classroomId")
+
+        val query = FirebaseUtil.getClassroomReference(classroomId).collection("groups")
+            .whereEqualTo("nomGroup", matriculate.text.toString())
+
+        Log.d("LoginUserName", "la query a bien ete cree avec success ")
+
+        query.get().addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                if (!task.result.isEmpty) {
+                    Log.d("LoginUserName", "Group already exist")
+                    AndroidUtils.showToast(this, "Group already exist")
+                } else {
+                    val groupRoomModel = GrouproomModel(
+                        grouproomId = FirebaseUtil.currentGroupId(),
+                        userIds = listOf(FirebaseUtil.currentUserId()),
+                        nomGroup = matriculate.text.toString(),
+                        classId = classroomId,
+                        profId = FirebaseUtil.currentUserId(),
+                    )
+
+                    Log.d("LoginUserName", "Group created: $groupRoomModel")
+                    Log.d("LoginUserName", "Group created: ${FirebaseUtil.currentGroupId()}")
+
+                    FirebaseUtil.currentGroupDetails(classroomId).set(groupRoomModel)
+                        .addOnSuccessListener {
+                            Log.d("LoginUserName", "Group created")
+                            AndroidUtils.showToast(this, "Group created")
+                        }
+                }
+            } else {
+                Log.e("LoginUserName", "Error checking group", task.exception)
+            }
+        }
+
+    }
+
+    private fun getOrCreateClassroomModel() {
+        // Requête pour vérifier si une classe avec le nom spécifié existe déjà
         val query = FirebaseUtil.allClassroomCollectionReference()
             .whereEqualTo("nomClasse", formation)
 
-        Log.d("SearchUserActivity", "Query valide: $query")
-        val parser = SnapshotParser<ClassroomModel> { snapshot ->
-            snapshot.toObject(classroomModel::class.java)!!
-        }
-
-        val options = FirestoreRecyclerOptions.Builder<ClassroomModel>()
-            .setQuery(query, parser)
-            .build()
-
-        Log.d("SearchUserActivity", "Options valide: $options")
-
-        FirebaseUtil.getClassroomReference(classroomId).get().addOnCompleteListener { task ->
+        query.get().addOnCompleteListener { task ->
             if (task.isSuccessful) {
-                classroomModel = (task.result.toObject(classroomModel::class.java)
-                    ?: ChatroomModel(
-                        classroomId,
-                        listOf(FirebaseUtil.currentUserId()),
-                        Timestamp.now(),
-                        ""
-                    ).also { FirebaseUtil.getClassroomReference(classroomId).set(it) }) as ClassroomModel
+                // Si des résultats sont trouvés, cela signifie que la classe existe déjà
+                if (!task.result.isEmpty) {
+                    // Récupérer la première classe correspondant à la requête
+                    classroomModel = task.result.documents[0].toObject(ClassroomModel::class.java)!!
+                    Log.d("LoginUserName", "Classe existante trouvée: $classroomModel")
+                    classroomId = task.result.documents[0].id
+                    classroomModel.userIds = classroomModel.userIds.plus(FirebaseUtil.currentUserId())
+                    FirebaseUtil.getClassroomReference(classroomId).set(classroomModel).addOnSuccessListener {
+                        Log.d("LoginUserName", "L'utilisateur a rejoins la classe")
+                        AndroidUtils.showToast(this, "L'utilisateur a rejoins la classe")
+                    }
+                } else {
+                    // Si aucun résultat n'est trouvé, créer une nouvelle classe
+                    classroomModel = ClassroomModel(
+                        classroomId = FirebaseUtil.currentClasseId(),
+                        nomClasse = formation,
+                        userIds = listOf(FirebaseUtil.currentUserId()),
+                        createdTimestamp = Timestamp.now(),
+                    )
+
+                    // Enregistrer la nouvelle classe dans Firestore
+                    Log.d("LoginUserName", "Classe créée: $classroomModel")
+                    Log.d("LoginUserName", "L'ID de la classe est ${FirebaseUtil.currentClasseId()}")
+                    Log.d("LoginUserName", "les details de la classe sont: ${FirebaseUtil.currentClasseDetails(classroomModel.classroomId!!)}")
+                    FirebaseUtil.currentClasseDetails(classroomModel.classroomId!!).set(classroomModel)
+                        .addOnSuccessListener {
+                            Log.d("LoginUserName", "Nouvelle classe créée avec succès: $classroomModel")
+                            classroomId = classroomModel.classroomId.toString()
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("LoginUserName", "Erreur lors de la création de la classe", e)
+                        }
+                }
+                Log.d("LoginUserName", "L'ID de la classe est ${FirebaseUtil.currentClasseId()}")
+                if (roleUser == "Professeur"){
+                    Log.d("LoginUserName", "Le role de l'utilisateur est professeur nous allons donc creer sa matiere")
+                    getOrCreateGroupRoomModel()
+                } else{
+                    Log.d("LoginUserName", "Le role de l'utilisateur est etudiant nous allons donc l'ajouter a sa classe et son group")
+                    addUserToAllGroupsInClass(classroomId, FirebaseUtil.currentUserId()!!)
+                }
+            } else {
+                Log.e("LoginUserName", "Erreur lors de l'exécution de la requête", task.exception)
             }
         }
     }
+
+    private fun addUserToAllGroupsInClass(classroomId: String, userId: String) {
+        val groupsRef = FirebaseUtil.allGroupCollectionReference(classroomId)
+        groupsRef.get().addOnSuccessListener { querySnapshot ->
+            for (document in querySnapshot.documents) {
+                document.reference.update("userIds", FieldValue.arrayUnion(userId))
+                    .addOnSuccessListener {
+                        Log.d("LoginUserName", "Utilisateur ajouté au groupe ${document.id}")
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("LoginUserName", "Erreur ajout de l'utilisateur au groupe", e)
+                    }
+            }
+        }.addOnFailureListener { e ->
+            Log.e("LoginUserName", "Erreur lors de la récupération des groupes", e)
+        }
+    }
+
 }

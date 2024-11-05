@@ -1,5 +1,6 @@
 package com.example.itschool.adapter
 
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,8 +11,10 @@ import com.example.itschool.model.Assignment
 import com.firebase.ui.firestore.FirestoreRecyclerAdapter
 import com.firebase.ui.firestore.FirestoreRecyclerOptions
 
-class AssignmentAdapter(options: FirestoreRecyclerOptions<Assignment>) :
-    FirestoreRecyclerAdapter<Assignment, AssignmentAdapter.AssignmentViewHolder>(options) {
+class AssignmentAdapter(
+    options: FirestoreRecyclerOptions<Assignment>,
+    private val context: Context
+) : FirestoreRecyclerAdapter<Assignment, AssignmentAdapter.AssignmentViewHolder>(options) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AssignmentViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_assignment, parent, false)
@@ -27,12 +30,14 @@ class AssignmentAdapter(options: FirestoreRecyclerOptions<Assignment>) :
         private val date: TextView = itemView.findViewById(R.id.date)
         private val description: TextView = itemView.findViewById(R.id.description)
         private val type: TextView = itemView.findViewById(R.id.type)
+        private  val matiere: TextView = itemView.findViewById(R.id.matiere)
 
         fun bind(assignment: Assignment) {
             type.text = assignment.type
             title.text = assignment.title
-            date.text = assignment.date.toString() // Assurez-vous que `date` est un format approprié pour l'affichage
+            date.text = assignment.date.toString()
             description.text = assignment.description
+            matiere.text = assignment.matiere
         }
     }
 }

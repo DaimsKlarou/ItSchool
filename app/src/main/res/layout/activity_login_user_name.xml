@@ -148,7 +148,7 @@
             android:id="@+id/matricule"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/matricule_text"
+            android:hint="@string/matiere_text"
             android:inputType="text"
             android:padding="15dp"
             android:layout_margin="10dp"

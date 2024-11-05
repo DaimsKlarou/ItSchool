@@ -47,5 +47,6 @@
         android:textColor="@color/white"
         android:padding="10dp"
         android:backgroundTint="@color/my_primary"
+        android:visibility="gone"
         />
 </LinearLayout>

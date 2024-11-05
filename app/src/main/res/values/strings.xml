@@ -30,6 +30,6 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
-    <string name="matricule_text">Enter votre maticule</string>
+    <string name="matiere_text">Enter votre matiere</string>
     <string name="classText">Select classe</string>
 </resources>

@@ -41,16 +41,17 @@
         android:elevation="5dp"/>
 
     <EditText
-        android:id="@+id/editTextDate"
+        android:id="@+id/editDate"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Date (YYYY-MM-DD)"
+        android:hint="Choisissez une date"
         android:background="@drawable/edit_text_phone_number_corner"
         android:textSize="18dp"
         android:padding="10dp"
         android:layout_marginVertical="10dp"
         android:textColor="@color/black"
         android:elevation="5dp"
+        android:focusable="false"
         />
 
     <EditText

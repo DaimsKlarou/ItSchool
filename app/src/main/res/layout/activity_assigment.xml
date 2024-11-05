@@ -47,35 +47,62 @@
         android:textSize="18dp"
         android:padding="10dp"
         android:layout_marginVertical="10dp"
+        android:layout_marginHorizontal="16dp"
         android:elevation="5dp"/>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:hint="Select la classe"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense.ExposedDropdownMenu"
+        android:background="@drawable/edit_text_phone_number_corner"
+        android:elevation="5dp">
+
+        <AutoCompleteTextView
+            android:id="@+id/editTextClasse"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="none"
+            android:background="@drawable/edit_text_phone_number_corner"
+            android:elevation="5dp"
+            android:textColor="@color/black"
+            android:textColorHint="@color/light_gray"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:hint="Select la matiere"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense.ExposedDropdownMenu"
+        android:background="@drawable/edit_text_phone_number_corner"
+        android:elevation="5dp">
+
+        <AutoCompleteTextView
+            android:id="@+id/editTextMatiere"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="none"
+            android:background="@drawable/edit_text_phone_number_corner"
+            android:elevation="5dp"
+            android:textColor="@color/black"
+            android:textColorHint="@color/light_gray"/>
+    </com.google.android.material.textfield.TextInputLayout>
 
     <EditText
         android:id="@+id/editTextDate"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Date (YYYY-MM-DD)"
+        android:hint="Choisissez une date"
         android:background="@drawable/edit_text_phone_number_corner"
         android:textSize="18dp"
         android:padding="10dp"
         android:layout_marginVertical="10dp"
         android:textColor="@color/black"
         android:elevation="5dp"
-        android:inputType="datetime"
+        android:layout_marginHorizontal="16dp"
         />
-
-    <EditText
-        android:id="@+id/editTextClasse"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Classe"
-        android:background="@drawable/edit_text_phone_number_corner"
-        android:textSize="18dp"
-        android:padding="10dp"
-        android:layout_marginVertical="10dp"
-        android:textColor="@color/black"
-        android:elevation="5dp"
-        />
-
 
     <EditText
         android:id="@+id/editTextDescription"
@@ -88,6 +115,8 @@
         android:padding="10dp"
         android:layout_marginVertical="10dp"
         android:elevation="5dp"
+
+        android:layout_marginHorizontal="16dp"
         />
 
     <Button

@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <application
+        android:name=".Itschool"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -11,11 +12,10 @@
         android:roundIcon="@drawable/logo"
         android:supportsRtl="true"
         android:theme="@style/Theme.ItSchool.NoActionBar"
-        tools:targetApi="31"
-        android:name=".Itschool"
-        >
-
-
+        tools:targetApi="31">
+        <activity
+            android:name=".ChatGroupActivity"
+            android:exported="false" />
         <activity
             android:name=".AssignmentActivity"
             android:exported="false" />

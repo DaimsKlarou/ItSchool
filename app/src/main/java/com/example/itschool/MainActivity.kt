@@ -6,6 +6,7 @@ import android.util.Log
 import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
 import com.example.itschool.R
+import com.example.itschool.model.UserModel
 import com.example.itschool.utils.FirebaseUtil
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationBarView
@@ -19,6 +20,8 @@ class MainActivity : AppCompatActivity() {
     private val profileFragment = ProfileFragment()
     private val groupFragment = GroupFragment()
     private val evaluationFragment = EvaluationFragment()
+    private val args = Bundle()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,6 +33,30 @@ class MainActivity : AppCompatActivity() {
         searchButton.setOnClickListener {
             startActivity(Intent(this@MainActivity, SearchUserActivity::class.java))
         }
+
+        var currentUser = UserModel()
+        FirebaseUtil.currentUserDetails().get().addOnSuccessListener {
+            currentUser = it.toObject(UserModel::class.java)!!
+        }
+
+        FirebaseUtil.currentClasseIdInString{ classId ->
+            if (classId != null) {
+                Log.d("MainActivityArguments", "l'Id de la classe est $classId")
+                args.putString("classroomId", classId)
+                Log.d("MainActivityArguments", "les arguments sur l'utilisateur est $currentUser")
+                args.putString("userRole", currentUser.role)
+                Log.d("MainActivityArguments", "Args est $args")
+
+                groupFragment.arguments = args
+                Log.d("MainActivityArguments", "Arguments for GroupFragment: ${groupFragment.arguments}")
+
+                evaluationFragment.arguments = args
+            }else {
+                Log.d("MainActivityArguments", "Impossible de récupérer la classe de l'utilisateur")
+            }
+        }
+
+
 
         bottomNavigationView.setOnItemSelectedListener(NavigationBarView.OnItemSelectedListener { item ->
 
