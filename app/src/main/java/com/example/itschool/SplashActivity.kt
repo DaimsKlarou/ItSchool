@@ -9,6 +9,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.example.itschool.utils.FirebaseUtil
 
 class SplashActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -17,9 +18,15 @@ class SplashActivity : ComponentActivity() {
         setContentView(R.layout.activity_splash)
 
         Handler(Looper.getMainLooper()).postDelayed({
-            val intent = Intent(this, LoginPhoneNumberActivity::class.java)
-            startActivity(intent)
-            finish()
+            if(FirebaseUtil.isLoggedIn()){
+                val intent = Intent(this, MainActivity::class.java)
+                startActivity(intent)
+                finish()
+            } else{
+                val intent = Intent(this, LoginPhoneNumberActivity::class.java)
+                startActivity(intent)
+                finish()
+            }
         }, 3000)
 
     }

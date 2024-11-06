@@ -43,7 +43,5 @@ class LoginPhoneNumberActivity : AppCompatActivity() {
             intent.putExtra("phone_number", login_country_code.fullNumberWithPlus)
             startActivity(intent)
         }
-
-
     }
 }

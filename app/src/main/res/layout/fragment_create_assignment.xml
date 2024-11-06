@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:gravity="center">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Créer une évaluation"
+        android:textSize="24sp"
+        android:layout_gravity="center"
+        android:layout_marginBottom="26dp"
+        android:textStyle="bold"
+        />
+
+    <EditText
+        android:id="@+id/editTextType"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Type"
+        android:textColor="@color/black"
+        android:background="@drawable/edit_text_phone_number_corner"
+        android:textSize="18dp"
+        android:padding="10dp"
+        android:layout_marginVertical="10dp"
+        android:elevation="5dp"/>
+
+    <EditText
+        android:id="@+id/editTextTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Titre"
+        android:textColor="@color/black"
+        android:background="@drawable/edit_text_phone_number_corner"
+        android:textSize="18dp"
+        android:padding="10dp"
+        android:layout_marginVertical="10dp"
+        android:elevation="5dp"/>
+
+    <EditText
+        android:id="@+id/editDate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Choisissez une date"
+        android:background="@drawable/edit_text_phone_number_corner"
+        android:textSize="18dp"
+        android:padding="10dp"
+        android:layout_marginVertical="10dp"
+        android:textColor="@color/black"
+        android:elevation="5dp"
+        android:focusable="false"
+        />
+
+    <EditText
+        android:id="@+id/editTextClasse"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Classe"
+        android:background="@drawable/edit_text_phone_number_corner"
+        android:textSize="18dp"
+        android:padding="10dp"
+        android:layout_marginVertical="10dp"
+        android:textColor="@color/black"
+        android:elevation="5dp"
+        />
+
+    <EditText
+        android:id="@+id/editTextDescription"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Description"
+        android:textColor="@color/black"
+        android:background="@drawable/edit_text_phone_number_corner"
+        android:textSize="18dp"
+        android:padding="10dp"
+        android:layout_marginVertical="10dp"
+        android:elevation="5dp"
+        />
+
+    <Button
+        android:id="@+id/buttonCreate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Créer l'évaluation"
+        android:layout_marginTop="44dp"
+        android:background="@drawable/edit_text_phone_number_corner"
+        android:textColor="@color/white"
+        android:textSize="18dp"
+        android:padding="10dp"
+        android:layout_gravity="bottom"
+
+        />
+
+</LinearLayout>
