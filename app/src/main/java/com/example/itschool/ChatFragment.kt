@@ -24,6 +24,7 @@ class ChatFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_chat, container, false)
         recyclerView = view.findViewById(R.id.recyler_view)
+
         setupRecyclerView()
         return view
     }
@@ -35,12 +36,14 @@ class ChatFragment : Fragment() {
 
         val options = FirestoreRecyclerOptions.Builder<ChatroomModel>()
             .setQuery(query, ChatroomModel::class.java)
+            .setLifecycleOwner(this)
             .build()
 
         adapter = RecentChatRecyclerAdapter(options, requireContext())
         recyclerView.layoutManager = LinearLayoutManager(context)
         recyclerView.adapter = adapter
         adapter?.startListening()
+
     }
 
     override fun onStart() {
@@ -55,6 +58,7 @@ class ChatFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
+        adapter?.startListening()
         adapter?.notifyDataSetChanged()
     }
 }

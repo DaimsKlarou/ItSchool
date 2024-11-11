@@ -18,9 +18,6 @@ import com.example.itschool.utils.AndroidUtils
 import com.example.itschool.utils.FirebaseUtil
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.QuerySnapshot
-import com.google.firebase.firestore.auth.User
 
 class LoginUserNameActivity : AppCompatActivity() {
     private lateinit var userName: EditText
@@ -138,6 +135,10 @@ class LoginUserNameActivity : AppCompatActivity() {
                 if (userModel.role != null) {
                     roleUser = userModel.role.toString()
                 }
+                val (niveau, niveau_info, filiere) = userModel.classe.toString().split(" ")
+                autoCompleteNiveau.setText("$niveau $niveau_info", false)
+                autoCompleteFiliere.setText(filiere, false)
+
             } else {
                 userModel = UserModel(phone = phoneNumber, username = userName.text.toString(), email = emailUser.text.toString(), createdTimestamp = Timestamp.now(), userId = FirebaseUtil.currentUserId(), matricule = matriculate.text.toString(), role = roleUser)
             }
@@ -205,6 +206,7 @@ class LoginUserNameActivity : AppCompatActivity() {
         }
     }
 
+    //methode pour creer la matiere du prof
     private fun getOrCreateGroupRoomModel() {
         Log.d("LoginUserName", "La matiere du prof est ${matriculate.text.toString()}")
         val classroomId = classroomModel.classroomId.toString()
@@ -225,10 +227,11 @@ class LoginUserNameActivity : AppCompatActivity() {
                 } else {
                     val groupRoomModel = GrouproomModel(
                         grouproomId = FirebaseUtil.currentGroupId(),
-                        userIds = listOf(FirebaseUtil.currentUserId()),
+                        userIds = arrayListOf(FirebaseUtil.currentUserId()!!),
                         nomGroup = matriculate.text.toString(),
                         classId = classroomId,
-                        profId = FirebaseUtil.currentUserId(),
+                        createdBy = FirebaseUtil.currentUserId(),
+                        profCreated = true,
                     )
 
                     Log.d("LoginUserName", "Group created: $groupRoomModel")
@@ -260,7 +263,12 @@ class LoginUserNameActivity : AppCompatActivity() {
                     classroomModel = task.result.documents[0].toObject(ClassroomModel::class.java)!!
                     Log.d("LoginUserName", "Classe existante trouvée: $classroomModel")
                     classroomId = task.result.documents[0].id
-                    classroomModel.userIds = classroomModel.userIds.plus(FirebaseUtil.currentUserId())
+                    if(classroomModel.userIds.contains(FirebaseUtil.currentUserId())){
+                          classroomModel.userIds = classroomModel.userIds
+                    } else {
+                        classroomModel.userIds = classroomModel.userIds.plus(FirebaseUtil.currentUserId())
+                    }
+
                     FirebaseUtil.getClassroomReference(classroomId).set(classroomModel).addOnSuccessListener {
                         Log.d("LoginUserName", "L'utilisateur a rejoins la classe")
                         AndroidUtils.showToast(this, "L'utilisateur a rejoins la classe")
@@ -287,6 +295,8 @@ class LoginUserNameActivity : AppCompatActivity() {
                             Log.e("LoginUserName", "Erreur lors de la création de la classe", e)
                         }
                 }
+
+                // Ajouter l'utilisateur à tous les groupes de la classe
                 Log.d("LoginUserName", "L'ID de la classe est ${FirebaseUtil.currentClasseId()}")
                 if (roleUser == "Professeur"){
                     Log.d("LoginUserName", "Le role de l'utilisateur est professeur nous allons donc creer sa matiere")
@@ -301,17 +311,25 @@ class LoginUserNameActivity : AppCompatActivity() {
         }
     }
 
+    //methode pour ajouter l'utilisateur a tous les group de sa classe qui sont creer par des professeurs
     private fun addUserToAllGroupsInClass(classroomId: String, userId: String) {
         val groupsRef = FirebaseUtil.allGroupCollectionReference(classroomId)
         groupsRef.get().addOnSuccessListener { querySnapshot ->
             for (document in querySnapshot.documents) {
-                document.reference.update("userIds", FieldValue.arrayUnion(userId))
-                    .addOnSuccessListener {
-                        Log.d("LoginUserName", "Utilisateur ajouté au groupe ${document.id}")
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("LoginUserName", "Erreur ajout de l'utilisateur au groupe", e)
-                    }
+                val group = document.toObject(GrouproomModel::class.java)
+
+                // Vérifiez si le groupe a le champ "profCreated" à "false"
+                Log.d("LoginUserName", "Group ID: ${group}")
+                if(group?.profCreated != false){
+                    document.reference.update("userIds", FieldValue.arrayUnion(userId))
+                        .addOnSuccessListener {
+                            Log.d("LoginUserName", "Utilisateur ajouté au groupe ${document.id}")
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("LoginUserName", "Erreur ajout de l'utilisateur au groupe", e)
+                        }
+                }
+
             }
         }.addOnFailureListener { e ->
             Log.e("LoginUserName", "Erreur lors de la récupération des groupes", e)

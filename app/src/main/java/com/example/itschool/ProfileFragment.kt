@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -19,6 +20,7 @@ import com.example.itschool.model.UserModel
 import com.example.itschool.utils.AndroidUtils
 import com.example.itschool.utils.FirebaseUtil
 import com.github.dhaval2404.imagepicker.ImagePicker
+import com.google.firebase.Timestamp
 import com.google.firebase.messaging.FirebaseMessaging
 
 class ProfileFragment : Fragment() {
@@ -73,13 +75,15 @@ class ProfileFragment : Fragment() {
 
             logoutBtn.setOnClickListener {
             FirebaseMessaging.getInstance().deleteToken().addOnCompleteListener { task ->
-    if (task.isSuccessful) {
-        FirebaseUtil.logout()
-        FirebaseUtil.currentUserDetails().update("isOnline", false)
-        val intent = Intent(requireContext(), SplashActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        startActivity(intent)
-    }
+                if (task.isSuccessful) {
+                    Log.d("Logout", "Token deleted")
+                    FirebaseUtil.logout()
+                    Log.d("Logout", "logout")
+                    Log.d("Logout", "l'utilisateur a bien ete deconnecte")
+                    val intent = Intent(requireContext(), SplashActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    startActivity(intent)
+                }
             }
         }
 

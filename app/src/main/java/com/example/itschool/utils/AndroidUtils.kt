@@ -8,6 +8,7 @@ import android.widget.Toast
 import android.widget.Toast.LENGTH_LONG
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
+import com.example.itschool.model.GrouproomModel
 import com.example.itschool.model.UserModel
 import com.google.firebase.Timestamp
 import java.util.Date
@@ -51,6 +52,16 @@ class AndroidUtils {
                         .into(imageView)
                 }
             }
+        }
+
+        fun passGroupModelAsIntent(intent: Intent, model: GrouproomModel) {
+            with(intent) {
+                putExtra("groupModel", model)
+            }
+        }
+
+        fun getGroupModelFromIntent(intent: Intent): GrouproomModel {
+            return intent.getParcelableExtra("groupModel")!!
         }
 
     }

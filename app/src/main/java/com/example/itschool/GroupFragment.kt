@@ -13,6 +13,7 @@ import com.example.itschool.adapter.RecentChatRecyclerAdapter
 import com.example.itschool.model.ChatroomModel
 import com.example.itschool.model.ClassroomModel
 import com.example.itschool.model.GrouproomModel
+import com.example.itschool.model.UserModel
 import com.example.itschool.utils.FirebaseUtil
 import com.firebase.ui.firestore.FirestoreRecyclerOptions
 import com.google.firebase.firestore.Query
@@ -22,6 +23,7 @@ class GroupFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private var adapter: RecentChatGroupRecyclerAdapter? = null
     private var classe : String? = null
+    private var currentUserRole : String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -30,6 +32,7 @@ class GroupFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_group, container, false)
         recyclerView = view.findViewById(R.id.recyler_view)
         classe = arguments?.getString("classroomId")
+        currentUserRole = arguments?.getString("userRole")
 
         setupRecyclerView()
         return view
@@ -39,11 +42,21 @@ class GroupFragment : Fragment() {
     private fun setupRecyclerView() {
         Log.d("GroupFragment", "la classe est ${classe}")
         Log.d("GroupFragment", "le currentUserId est ${FirebaseUtil.currentUserId()}")
-        val query: Query = FirebaseUtil.getClassroomReference(classe!!).collection("groups")
-            .orderBy("lastMessageTimestamp", Query.Direction.DESCENDING)
+        var query: Query? = null
+
+        if (currentUserRole == "Professeur") {
+            query = FirebaseUtil.getClassroomReference(classe!!).collection("groups")
+                .whereEqualTo("createdBy", FirebaseUtil.currentUserId())
+                .orderBy("lastMessageTimestamp", Query.Direction.DESCENDING)
+        } else {
+            query = FirebaseUtil.getClassroomReference(classe!!).collection("groups")
+                .whereArrayContains("userIds", FirebaseUtil.currentUserId()!!)
+                .orderBy("lastMessageTimestamp", Query.Direction.DESCENDING)
+        }
 
         val options = FirestoreRecyclerOptions.Builder<GrouproomModel>()
             .setQuery(query, GrouproomModel::class.java)
+            .setLifecycleOwner(this)
             .build()
 
         adapter = RecentChatGroupRecyclerAdapter(options, requireContext())
@@ -64,6 +77,7 @@ class GroupFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
+        adapter?.startListening()
         adapter?.notifyDataSetChanged()
     }
 }

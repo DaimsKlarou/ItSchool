@@ -91,7 +91,7 @@ class ChatActivity : AppCompatActivity() {
                     onlineStatus.text = "En ligne"
                 } else {
                     Log.d("FirebaseUtil", "Other user is offline")
-                    onlineStatus.text = "en ligne a " + FirebaseUtil.timestampToString(otherUser.lastConnection)
+                    onlineStatus.text = "en ligne " + FirebaseUtil.alltimestampToString(otherUser.lastConnection)
                 }
             }.addOnFailureListener { exception ->
                 Log.e("FirebaseUtil", "Error getting documents: ", exception)
@@ -104,6 +104,7 @@ class ChatActivity : AppCompatActivity() {
 
         val options = FirestoreRecyclerOptions.Builder<ChatMessageModel>()
             .setQuery(query, ChatMessageModel::class.java)
+            .setLifecycleOwner(this)
             .build()
 
         adapter = ChatRecyclerAdapter(options, applicationContext)
@@ -127,6 +128,8 @@ class ChatActivity : AppCompatActivity() {
         chatroomModel.lastMessageTimestamp = Timestamp.now()
         chatroomModel.lastMessageSenderId = FirebaseUtil.currentUserId()
         chatroomModel.lastMessage = message
+
+
         FirebaseUtil.getChatroomReference(chatroomId).set(chatroomModel)
 
         val chatMessageModel = ChatMessageModel(message, FirebaseUtil.currentUserId(), Timestamp.now())
@@ -181,7 +184,7 @@ class ChatActivity : AppCompatActivity() {
     private fun callApi(jsonObject: JSONObject) {
         val JSON = "application/json; charset=utf-8".toMediaTypeOrNull()
         val client = OkHttpClient()
-        val url = "https://fcm.googleapis.com/fcm/send"
+        val url = "https://fcm.googleapis.com/v1/projects/itschool-d78ae/messages:send"
         val body = RequestBody.create(JSON, jsonObject.toString())
         val request = Request.Builder()
             .url(url)

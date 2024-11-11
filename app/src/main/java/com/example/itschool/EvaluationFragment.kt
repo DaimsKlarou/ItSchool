@@ -87,6 +87,7 @@ class EvaluationFragment : Fragment() {
 
         val options = FirestoreRecyclerOptions.Builder<Assignment>()
             .setQuery(query, Assignment::class.java)
+            .setLifecycleOwner(this)
             .build()
 
         Log.d("EvaluationFragment", "Options: $options")

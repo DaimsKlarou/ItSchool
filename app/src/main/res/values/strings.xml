@@ -32,4 +32,5 @@
     <string name="dummy_content">DUMMY\nCONTENT</string>
     <string name="matiere_text">Enter votre matiere</string>
     <string name="classText">Select classe</string>
+    <string name="select_la_classe">Select la classe</string>
 </resources>

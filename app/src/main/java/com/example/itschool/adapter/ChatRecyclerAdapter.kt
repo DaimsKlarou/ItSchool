@@ -24,7 +24,7 @@ class ChatRecyclerAdapter(
         position: Int,
         model: ChatMessageModel
     ) {
-        Log.i("haushd", "asjd")
+
         if (model.senderId == FirebaseUtil.currentUserId()) {
             holder.leftChatLayout.visibility = View.GONE
             holder.rightChatLayout.visibility = View.VISIBLE

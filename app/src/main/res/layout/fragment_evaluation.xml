@@ -6,9 +6,9 @@
     android:orientation="vertical"
     android:padding="16dp"
     android:background="@color/white"
-    android:id="@+id/fragment_container"
-    >
+    android:id="@+id/fragment_container">
 
+    <!-- Titre statique en haut, non défilable -->
     <TextView
         android:id="@+id/tv_title"
         android:layout_width="wrap_content"
@@ -17,25 +17,26 @@
         android:textSize="24sp"
         android:layout_marginBottom="16dp"/>
 
+    <!-- Conteneur défilable pour le reste du contenu -->
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:id="@+id/linearLayoutContainer"
-            >
+            android:id="@+id/linearLayoutContainer">
 
             <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
+                android:id="@+id/recyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
 
         </LinearLayout>
     </ScrollView>
+
     <Button
         android:id="@+id/addEvaluationButton"
         android:layout_width="wrap_content"
@@ -47,6 +48,5 @@
         android:textColor="@color/white"
         android:padding="10dp"
         android:backgroundTint="@color/my_primary"
-        android:visibility="gone"
-        />
+        android:visibility="gone"/>
 </LinearLayout>

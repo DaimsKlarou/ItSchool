@@ -28,6 +28,14 @@ class RecentChatGroupRecyclerAdapter(
 
     override fun onBindViewHolder(holder: GrouproomModelViewHolder, position: Int, model: GrouproomModel) {
         holder.bind(model)
+
+        holder.itemView.setOnClickListener {
+            Log.d("RecentChatGroupRecyclerAdapter", "onBindViewHolder: ${model.nomGroup}")
+            val intent = Intent(context, ChatGroupActivity::class.java)
+            AndroidUtils.passGroupModelAsIntent(intent, model)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK and Intent.FLAG_ACTIVITY_CLEAR_TASK
+            context.startActivity(intent)
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GrouproomModelViewHolder {
@@ -40,11 +48,14 @@ class RecentChatGroupRecyclerAdapter(
         val lastMessageText: TextView = itemView.findViewById(R.id.last_message_text)
         val lastMessageTime: TextView = itemView.findViewById(R.id.last_message_time_text)
         val profilePic: ImageView = itemView.findViewById(R.id.profile_pic_image_view)
+        val unreadCount: TextView = itemView.findViewById(R.id.unread_count)
 
         fun bind(grouproomModel: GrouproomModel) {
-            nomGroup.text = grouproomModel.nomGroup
+            nomGroup.text = grouproomModel.nomGroup!!
             lastMessageText.text = grouproomModel.lastMessage ?: "Aucun message"
             lastMessageTime.text = FirebaseUtil.timestampToString(grouproomModel.lastMessageTimestamp ?: Timestamp.now())
+            profilePic.setImageResource(R.drawable.group_icon)
+            unreadCount.visibility = View.GONE
         }
     }
 

@@ -69,7 +69,13 @@ object FirebaseUtil {
         return SimpleDateFormat("HH:mm").format(timestamp?.toDate()!!)
     }
 
+    fun alltimestampToString(timestamp: Timestamp?): String {
+        return SimpleDateFormat("EEE d MMM HH:mm").format(timestamp?.toDate()!!)
+    }
+
     fun logout() {
+        currentUserDetails().update("isOnline", false)
+        currentUserDetails().update("lastConnection", Timestamp.now())
         FirebaseAuth.getInstance().signOut()
     }
 
@@ -101,6 +107,13 @@ object FirebaseUtil {
     fun getClassroomReference(classroomId: String): DocumentReference {
         return FirebaseFirestore.getInstance().collection("classes").document(classroomId)
     }
+
+    fun getGroupeReference(classroomId: String, groupId: String): DocumentReference {
+        return FirebaseFirestore.getInstance()
+            .collection("classes").document(classroomId)
+            .collection("groups").document(groupId)
+    }
+
     fun allClassroomCollectionReference(): CollectionReference {
         return FirebaseFirestore.getInstance().collection("classes")
     }
@@ -121,23 +134,34 @@ object FirebaseUtil {
         return FirebaseAuth.getInstance().uid
     }
 
-    fun currentClasseIdInString(callcallback: (String) -> Unit) : String? {
-        var classe : String? = null
-
+    fun currentClasseIdInString(callback: (String) -> Unit) {
         FirebaseFirestore.getInstance().collection("classes")
             .whereArrayContains("userIds", currentUserId()!!).get().addOnSuccessListener { task ->
                 if (!task.isEmpty) {
                     Log.d("FirebaseUtil", "Document is not empty")
                     Log.d("FirebaseUtil", "Document is ${task.documents[0].id}")
-                    callcallback(task.documents[0].id)
+                    callback(task.documents[0].id)
                 }else {
                     Log.d("FirebaseUtil", "Document is empty")
-                    callcallback(null.toString())
+                    callback(null.toString())
                 }
             }
+    }
 
-        Log.d("FirebaseUtil", "vous verrez la classe courante est ${classe}")
-        return classe
+    fun searchClasseWithName(name: String, onComplete: (ClassroomModel) -> Unit) {
+        var classe: ClassroomModel
+        FirebaseFirestore.getInstance().collection("classes")
+            .whereEqualTo("nomClasse", name).get().addOnCompleteListener {task ->
+                if (task.isSuccessful) {
+                    if(!task.result.isEmpty){
+                        Log.d("FirebaseUtil", "La classe que nous avons retrouver est ${task.result.documents[0].id}")
+                        classe = task.result.documents[0].toObject(ClassroomModel::class.java)!!
+                        onComplete(classe)
+                    }else {
+                        Log.d("FirebaseUtil", "Aucune classe ne correspond a ce nom")
+                    }
+                }
+            }
     }
 
     fun currentClasseDetails(classroomId: String): DocumentReference {
@@ -168,15 +192,12 @@ object FirebaseUtil {
             }
     }
 
-    fun getAllGroupFromClasse(classe: String): DocumentReference {
-        return getClassroomReference(classe)
-    }
-
     fun AllClassOfUserProf(profId: String) : ArrayList<String> {
 
         val listClasse = ArrayList<String>()
         val classes = FirebaseFirestore.getInstance().collection("classes")
             .whereArrayContains("userIds", profId)
+
         classes.get().addOnSuccessListener { task ->
             for (document in task.documents) {
                val classe = document.toObject(ClassroomModel::class.java)
@@ -210,7 +231,6 @@ object FirebaseUtil {
                 }
             }
         }
-
         return listMatiere
     }
 
@@ -218,5 +238,67 @@ object FirebaseUtil {
         return getClassroomReference(classroomId).collection("assignments")
     }
 
+    fun getChatGrouproomMessageReference(classeId : String, groupId: String): CollectionReference {
+        return FirebaseFirestore.getInstance()
+            .collection("classes").document(classeId)
+            .collection("groups").document(groupId)
+            .collection("chats")
+    }
+
+    fun getGroupMembers(groupId: String): Query {
+        return FirebaseFirestore.getInstance()
+            .collection("groups")
+            .whereEqualTo("grouproomId", groupId)
+    }
+
+    fun allUserInClasse(classeId: String): Query {
+        return FirebaseFirestore.getInstance()
+            .collection("users")
+            .whereEqualTo("classe", classeId)
+    }
+
+    fun allUserInGroup(groupId: String): Query {
+        return FirebaseFirestore.getInstance().collection("users")
+    }
+
+    fun getChatGrouproomReference(classeId : String, groupId: String): DocumentReference {
+        return FirebaseFirestore.getInstance()
+            .collection("classes")
+            .document(classeId).collection("groups")
+            .document(groupId)
+    }
+
+    fun getChatGroupMessagesReferences(classeId : String, groupId: String) : CollectionReference {
+        return FirebaseFirestore.getInstance()
+            .collection("classes")
+            .document(classeId).collection("groups")
+            .document(groupId).collection("chats")
+    }
+
+    fun userSendMessageToGroup(userId : String, onComplete: (String) -> Unit) {
+        Log.d("FirebaseUtil", "L'id de l'utilisateur est ${userId}")
+        FirebaseFirestore.getInstance().collection("users")
+            .whereEqualTo("userId", userId).get().addOnSuccessListener { task ->
+                if (!task.isEmpty) {
+                    val user = task.documents[0].toObject(UserModel::class.java)
+                    onComplete(user?.username!!)
+                    Log.d("FirebaseUtil", "Le nom de l'utilisateur ")
+                } else {
+                    Log.d(
+                        "FirebaseUtil",
+                        "Aucun utilisateur n'a ete trouver sous le nom que vous avez passer"
+                    )
+                }
+            }
+    }
+
+    fun infoCurrentUser(onComplete: (UserModel) -> Unit){
+        currentUserDetails().get().addOnSuccessListener { task ->
+            if (task != null) {
+                val user = task.toObject(UserModel::class.java)
+                onComplete(user!!)
+            }
+        }
+    }
 
 }

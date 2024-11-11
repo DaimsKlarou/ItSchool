@@ -1,7 +1,5 @@
 package com.example.itschool
 
-import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.EditText
@@ -13,8 +11,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.itschool.adapter.ChatRecyclerAdapter
+import com.example.itschool.adapter.GroupRecyclerAdapter
 import com.example.itschool.model.ChatMessageModel
 import com.example.itschool.model.ChatroomModel
+import com.example.itschool.model.GrouproomModel
 import com.example.itschool.model.UserModel
 import com.example.itschool.utils.AndroidUtils
 import com.example.itschool.utils.FirebaseUtil
@@ -28,13 +28,18 @@ import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import org.json.JSONObject
 import java.io.IOException
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.DocumentSnapshot
 
 class ChatGroupActivity : AppCompatActivity() {
 
-    private lateinit var otherUser: UserModel
-    private lateinit var chatroomId: String
-    private lateinit var chatroomModel: ChatroomModel
-    private lateinit var adapter: ChatRecyclerAdapter
+    private lateinit var groupId: String
+    private lateinit var classeId: String
+    private lateinit var adapter: GroupRecyclerAdapter
+
+    // Remplace `otherUser` par `groupModel`
+    private lateinit var groupModel: GrouproomModel
+    private lateinit var grouproomModel: GrouproomModel
 
     private lateinit var messageInput: EditText
     private lateinit var sendMessageBtn: ImageButton
@@ -42,72 +47,88 @@ class ChatGroupActivity : AppCompatActivity() {
     private lateinit var otherUsername: TextView
     private lateinit var recyclerView: RecyclerView
     private lateinit var imageView: ImageView
-    private lateinit var onlineStatus: TextView
-    private lateinit var userName : TextView
+    private lateinit var membre: TextView
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chat_group)
 
-        // Obtenir le modèle UserModel
-        otherUser = AndroidUtils.getUserModelFromIntent(intent)
-        Log.d("ChatGroupActivity", "OtherUser lastConnection is : ${otherUser }")
-        chatroomId = FirebaseUtil.getChatroomId(
-            FirebaseUtil.currentUserId().toString(),
-            otherUser.userId.toString()
-        )
+        // Obtiens le modèle GrouproomModel
+        groupModel = AndroidUtils.getGroupModelFromIntent(intent)
+        groupId = groupModel.grouproomId!!
+        classeId = groupModel.classId!!
 
+        // Initialise les composants de l’interface
         messageInput = findViewById(R.id.chat_message_input)
         sendMessageBtn = findViewById(R.id.message_send_btn)
         backBtn = findViewById(R.id.back_btn)
-        otherUsername = findViewById(R.id.other_username)
+        otherUsername = findViewById(R.id.group_name) // Tu pourrais l’utiliser pour le nom du groupe
         recyclerView = findViewById(R.id.chat_recycler_view)
-        imageView = findViewById(R.id.profile_pic_image_view)
-        onlineStatus = findViewById(R.id.online_status)
+        membre = findViewById(R.id.membre)
 
-        FirebaseUtil.getOtherProfilePicStorageRef(otherUser.userId.toString()).downloadUrl
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    val uri: Uri? = task.result
-                    uri?.let { AndroidUtils.setProfilePic(this, it, imageView) }
-                }
-            }
+        // Affiche le nom du groupe
+        otherUsername.text = groupModel.nomGroup
 
-        backBtn.setOnClickListener { onBackPressed() }
-        otherUsername.text = otherUser.username
-
+        // Gestion de l’envoi des messages
         sendMessageBtn.setOnClickListener {
             val message = messageInput.text.toString().trim()
             if (message.isNotEmpty()) {
-                sendMessageToUser(message)
+                sendMessageToGroup(message)
             }
         }
 
-        getOrCreateChatroomModel()
-        setupChatRecyclerView()
-        val query = FirebaseUtil.getOtherUserIsOnline(otherUser.userId.toString())
-        query.get().addOnSuccessListener { documents ->
-            if (!documents.isEmpty) {
-                Log.d("FirebaseUtil", "Other user is online")
-                onlineStatus.text = "En ligne"
+        membre.text =  groupModel.userIds?.size.toString() + " membres"
+
+        backBtn.setOnClickListener {
+            finish()
+        }
+
+        getOrCreateChatroomModel(classeId, groupModel)
+
+    }
+
+    private fun getOrCreateChatroomModel(classeId : String, groupId: GrouproomModel) {
+        Log.d("ChatGroupActivity", "getOrCreateChatroomModel")
+        Log.d("ChatGroupActivity", "classeId: $classeId, groupId: $groupId")
+        FirebaseUtil.getChatGrouproomMessageReference(classeId, groupId.grouproomId!!).get().addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                Log.d("ChatGroupActivity", "Successfully getOrCreateChatroomModel")
+                Log.d("ChatGroupActivity", "Document snapshot: ${task.result.documents}")
+                if (task.result.documents.isNotEmpty()) {
+                    Log.d("ChatGroupActivity", "Found existing grouproomModel")
+                    grouproomModel = task.result.documents[0].toObject(GrouproomModel::class.java)!!
+                } else {
+                    Log.d("ChatGroupActivity", "Creating new grouproomModel")
+                        // Crée la nouvelle salle de chat dans Firestore
+                        FirebaseUtil.getChatGrouproomMessageReference(classeId, groupId.grouproomId!!).get().addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                Log.d("ChatGroupActivity", "Successfully getOrCreateChatroomModel")
+                                Log.d(
+                                    "ChatGroupActivity",
+                                    "Document snapshot: ${task.result.documents}"
+                                )
+
+                            }
+                        }
+                }
+                setupChatRecyclerView()
             } else {
-                Log.d("FirebaseUtil", "Other user is offline")
-                onlineStatus.text = "en ligne a " + FirebaseUtil.timestampToString(otherUser.lastConnection)
+                Log.e("ChatGroupActivity", "Erreur lors de la récupération de la salle de discussion : ", task.exception)
             }
-        }.addOnFailureListener { exception ->
-            Log.e("FirebaseUtil", "Error getting documents: ", exception)
         }
     }
 
     private fun setupChatRecyclerView() {
-        val query: Query = FirebaseUtil.getChatroomMessageReference(chatroomId)
+        val query: Query = FirebaseUtil.getChatGrouproomMessageReference(classeId, groupId)
             .orderBy("timestamp", Query.Direction.DESCENDING)
 
         val options = FirestoreRecyclerOptions.Builder<ChatMessageModel>()
             .setQuery(query, ChatMessageModel::class.java)
+            .setLifecycleOwner(this)
             .build()
 
-        adapter = ChatRecyclerAdapter(options, applicationContext)
+        adapter = GroupRecyclerAdapter(options, applicationContext)
         val manager = LinearLayoutManager(this).apply { reverseLayout = true }
         recyclerView.layoutManager = manager
         recyclerView.adapter = adapter
@@ -120,60 +141,51 @@ class ChatGroupActivity : AppCompatActivity() {
         })
     }
 
-    private fun sendMessageToUser(message: String) {
-//        // Chiffrement du message avec la clé publique de l'autre utilisateur
-//        val recipientPublicKey = SecurityUtil.getPublicKeyForUser(otherUser.userId.toString())
-//        val (encryptedMessage, encryptedSecretKey) = SecurityUtil.encryptMessage(message, recipientPublicKey)
 
-        chatroomModel.lastMessageTimestamp = Timestamp.now()
-        chatroomModel.lastMessageSenderId = FirebaseUtil.currentUserId()
-        chatroomModel.lastMessage = message
-        FirebaseUtil.getChatroomReference(chatroomId).set(chatroomModel)
+    private fun sendMessageToGroup(message: String) {
+        Log.d("ChatGroupActivity", "sendMessageToGroup")
+        groupModel.lastMessageTimestamp = Timestamp.now()
+        groupModel.lastMessageSenderId = FirebaseUtil.currentUserId()
+        groupModel.lastMessage = message
+
+        FirebaseUtil.getChatGrouproomReference(classeId, groupId).set(groupModel)
 
         val chatMessageModel = ChatMessageModel(message, FirebaseUtil.currentUserId(), Timestamp.now())
-        FirebaseUtil.getChatroomMessageReference(chatroomId).add(chatMessageModel)
-            .addOnCompleteListener { task: Task<DocumentReference> ->
+        FirebaseUtil.getChatGroupMessagesReferences(classeId, groupId).add(chatMessageModel)
+            .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     messageInput.setText("")
-                    sendNotification(message)
+                    sendGroupNotification(message)
                 }
             }
     }
 
-    private fun getOrCreateChatroomModel() {
-        FirebaseUtil.getChatroomReference(chatroomId).get().addOnCompleteListener { task ->
+    private fun sendGroupNotification(message: String) {
+        FirebaseUtil.getGroupMembers(groupId).get().addOnCompleteListener { task ->
             if (task.isSuccessful) {
-                chatroomModel = task.result.toObject(ChatroomModel::class.java)
-                    ?: ChatroomModel(
-                        chatroomId,
-                        listOf(FirebaseUtil.currentUserId(), otherUser.userId),
-                        Timestamp.now(),
-                        ""
-                    ).also { FirebaseUtil.getChatroomReference(chatroomId).set(it) }
-            }
-        }
-    }
+                val currentUser = FirebaseUtil.currentUserId()
+                val members = task.result?.documents?.mapNotNull { it.toObject(UserModel::class.java) }
 
-    private fun sendNotification(message: String) {
-        FirebaseUtil.currentUserDetails().get().addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                val currentUser = task.result.toObject(UserModel::class.java)
-                try {
-                    val jsonObject = JSONObject()
-                    val notificationObj = JSONObject().apply {
-                        put("title", currentUser?.username)
-                        put("body", message)
-                    }
-                    val dataObj = JSONObject().apply {
-                        put("userId", currentUser?.userId)
-                    }
-                    jsonObject.put("notification", notificationObj)
-                    jsonObject.put("data", dataObj)
-                    jsonObject.put("to", otherUser.fcmToken)
+                members?.forEach { member ->
+                    if (member.userId != currentUser) { // Ignore l'utilisateur actuel
+                        try {
+                            val jsonObject = JSONObject()
+                            val notificationObj = JSONObject().apply {
+                                put("title", groupModel.nomGroup)
+                                put("body", message)
+                            }
+                            val dataObj = JSONObject().apply {
+                                put("groupId", groupId)
+                            }
+                            jsonObject.put("notification", notificationObj)
+                            jsonObject.put("data", dataObj)
+                            jsonObject.put("to", member.fcmToken)
 
-                    callApi(jsonObject)
-                } catch (e: Exception) {
-                    Log.e("ChatActivity", "Failed to create JSON for notification", e)
+                            callApi(jsonObject)
+                        } catch (e: Exception) {
+                            Log.e("ChatGroupActivity", "Failed to create JSON for notification", e)
+                        }
+                    }
                 }
             }
         }

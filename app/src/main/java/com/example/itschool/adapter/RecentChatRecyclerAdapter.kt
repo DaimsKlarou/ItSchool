@@ -28,7 +28,7 @@ class RecentChatRecyclerAdapter(
             .get().addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val lastMessageSentByMe = model.lastMessageSenderId == FirebaseUtil.currentUserId()
-
+                    holder.unreadCount.visibility = View.GONE
                     val otherUserModel = task.result.toObject(UserModel::class.java)
 
                     otherUserModel?.let { user ->
@@ -70,5 +70,7 @@ class RecentChatRecyclerAdapter(
         val lastMessageText: TextView = itemView.findViewById(R.id.last_message_text)
         val lastMessageTime: TextView = itemView.findViewById(R.id.last_message_time_text)
         val profilePic: ImageView = itemView.findViewById(R.id.profile_pic_image_view)
+        val unreadCount: TextView = itemView.findViewById(R.id.unread_count)
+
     }
 }
